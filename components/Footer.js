@@ -6,8 +6,9 @@ const Footer = () => {
     <footer className="bg-gray-900 text-white py-6  mt-auto">
       <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
         <p className="text-sm text-center md:text-left">
-          &copy; {new Date().getFullYear()} Rango Stock Inventory App. Created by Gideon Anokye (Brown.Dev) All rights reserved.
+          &copy; {new Date().getFullYear()} Rango Stock Inventory App.  All rights reserved.
         </p>
+        <div><p> Created by Gideon Anokye (Brown.Dev)</p></div>
         <div className="mt-2 md:mt-0 flex space-x-4">
           <a href="#" className="hover:text-gray-400 text-sm">
             Privacy
