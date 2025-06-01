@@ -9,8 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "file-saver": "^2.0.5",
     "firebase": "^11.8.1",
     "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
+    "lucide-react": "^0.511.0",
     "next": "15.3.1",
     "papaparse": "^5.5.3",
     "react": "^19.0.0",

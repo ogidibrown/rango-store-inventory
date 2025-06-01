@@ -49,7 +49,7 @@ export default function LoginPage() {
           <input
             type="email"
             placeholder="Enter Your Email Here!"
-            className="w-full border placeholder-gray-400 border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border placeholder-gray-400 border-gray-300 text-black px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -76,7 +76,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="text-center text-sm">
+        <div className="text-black text-center text-sm">
           {isRegistering ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
             type="button"

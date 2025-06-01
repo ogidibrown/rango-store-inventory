@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { db } from "../../libs/firebase";
+import { db } from "../../../libs/firebase";
 import Link from "next/link";
 
 export default function ItemsPage() {
@@ -28,7 +28,7 @@ export default function ItemsPage() {
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Items</h1>
+      <h1 className="text-2xl font-bold mb-4">All Items</h1>
       <ul className="space-y-2">
         {items.map((item) => (
           <li key={item.id} className="border p-4 rounded flex justify-between items-center">
