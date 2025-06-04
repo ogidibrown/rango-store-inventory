@@ -57,7 +57,7 @@ const Navbar = () => {
               Items
             </span>
             {dropdownOpen && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-white border shadow-md rounded-md z-50">
+              <div className="absolute top-full  mt-2 w-48 bg-white border shadow-md rounded-md z-50">
                 {[
                   { label: "All Items", href: "/items/all-items" },
                   { label: "Filters", href: "/items/filters" },
@@ -70,7 +70,7 @@ const Navbar = () => {
                   <Link
                     key={href}
                     href={href}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" alt=''
                   >
                     {label}
                   </Link>
@@ -86,6 +86,30 @@ const Navbar = () => {
             } hover:text-[#ffd100]`}
           >
             Add Item
+          </Link>
+          <Link
+            href="/suppliers-fleet"
+            className={`text-sm font-medium ${
+              pathname === "/suppliers-fleet" ? "text-[#ffd100]" : "text-gray-700"
+            } hover:text-[#ffd100]`}
+          >
+            Supp/fleet
+          </Link>
+          <Link
+            href="/analytics"
+            className={`text-sm font-medium ${
+              pathname === "/analytics" ? "text-[#ffd100]" : "text-gray-700"
+            } hover:text-[#ffd100]`}
+          >
+            Analytics
+          </Link>
+          <Link
+            href="/issues"
+            className={`text-sm font-medium ${
+              pathname === "/issues" ? "text-[#ffd100]" : "text-gray-700"
+            } hover:text-[#ffd100]`}
+          >
+           issues
           </Link>
           <Link
             href="/items/stock-history"
@@ -164,6 +188,12 @@ const Navbar = () => {
 
           <Link href="/add-items" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
             Add Item
+          </Link>
+          <Link href="/suppliers-fleet" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            Supp/fleet
+          </Link>
+          <Link href="/issues" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            Issues
           </Link>
 
           {isAuthenticated ? (

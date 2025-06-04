@@ -76,8 +76,9 @@ const GetPage = () => {
     fetchItems(); // Refresh
   };
 
-  const handleDelete = (id) => {
-    alert("Delete function not implemented yet.");
+ const handleDelete = async (id) => {
+    await deleteDoc(doc(db, "items", id));
+    fetchItems();
   };
 
   return (

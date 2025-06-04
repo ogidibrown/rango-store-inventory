@@ -34,7 +34,7 @@ export default function ItemsPage() {
           <li key={item.id} className="border p-4 rounded flex justify-between items-center">
             <div>
               <p className="font-bold">{item.description}</p>
-              <p className="text-sm text-gray-500">{item.partnumber} — Loc: {item.location} — Qty: {item.quantity}</p>
+              <p className="text-sm text-gray-500">{item.partnumber} — Loc: {item.location} - Supplier: {item.supplier} - unit cost: {item.unitcost} — Qty: {item.quantity}</p>
             </div>
             <div className="space-x-2">
             <Link href={`/edit-item/${item.id}`} className="text-blue-600 hover:underline">Edit</Link>

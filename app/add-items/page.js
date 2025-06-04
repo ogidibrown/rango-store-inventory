@@ -16,7 +16,9 @@ export default function AddItemPage() {
   const [partnumber, setPartnumber] = useState("");
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("Filters"); // default selection
-  const [quantity, setQuantity] = useState(0);
+  const [unitcost, setUnitcost] = useState("");
+   const [supplier, setSupplier] = useState("");
+  const [quantity, setQuantity] = useState("");
 
   const router = useRouter();
 
@@ -41,6 +43,8 @@ export default function AddItemPage() {
       partnumber,
       quantity,
       category,
+      unitcost,
+      supplier,
       location,
       createdAt: Date.now(),
     });
@@ -74,11 +78,27 @@ export default function AddItemPage() {
           required
         />
         <input
+        type="number"
+          className="w-full border p-2"
+          placeholder="Unit cost"
+          value={unitcost}
+          onChange={(e) => setUnitcost(Number(e.target.value))}
+          required
+        />
+        <input
           type="number"
           className="w-full border p-2"
           placeholder="Quantity"
           value={quantity}
           onChange={(e) => setQuantity(Number(e.target.value))}
+          required
+        />
+        <input
+          
+          className="w-full border p-2"
+          placeholder="Supplier"
+          value={supplier}
+          onChange={(e) => setSupplier(e.target.value)}
           required
         />
 
