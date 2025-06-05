@@ -78,8 +78,8 @@ export default function StockHistoryPage() {
   });
 
   const totalCost = filteredHistory.reduce((sum, entry) => {
-  return entry.type === "issued"
-    ? sum + Number(entry.cost || 0) * Number(entry.change || 0)
+  return entry.type === "stock-out"
+    ? sum + Number(entry.unitcost || 0) * Number(entry.change || 0)
     : sum;
 }, 0);
 
@@ -214,7 +214,7 @@ export default function StockHistoryPage() {
               <th className="border text-gray-700 p-2">Type</th>
               <th className="border text-gray-700 p-2">Fleet</th>
               <th className="border text-gray-700 p-2">Category</th>
-              <th className="border text-gray-700 p-2">Cost</th>
+              <th className="border text-gray-700 p-2">unit Cost</th>
             </tr>
           </thead>
           <tbody>
