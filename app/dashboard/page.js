@@ -11,6 +11,7 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  onSnapshot,
 } from "firebase/firestore";
 import { Card, CardContent } from "../../components/card";
 import {
@@ -31,16 +32,27 @@ export default function Dashboard() {
   const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubscribeMessages;
+    
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.push("/login");
       } else {
         setUser(user);
-        fetchMessages();
+        // Set up real-time listener for messages
+        unsubscribeMessages = fetchMessages();
       }
     });
+    
     fetchStats();
-    return () => unsubscribe();
+    
+    // Cleanup function
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeMessages) {
+        unsubscribeMessages();
+      }
+    };
   }, [router]);
 
   const fetchStats = async () => {
@@ -57,24 +69,37 @@ export default function Dashboard() {
     setItemsOut(history.filter((h) => h.type === "stock-out").length);
   };
 
-  const fetchMessages = async () => {
+  const fetchMessages = () => {
     const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
-    const querySnapshot = await getDocs(q);
-    const msgs = querySnapshot.docs.map(doc => doc.data());
-    setMessages(msgs);
+    
+    // Real-time listener
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const msgs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setMessages(msgs);
+      console.log("Messages updated:", msgs);
+    }, (error) => {
+      console.error("Error fetching messages:", error);
+    });
+    
+    return unsubscribe;
   };
 
   const handleSendMessage = async () => {
     if (newMessage.trim() === "") return;
     
     try {
+      console.log("Sending message:", newMessage);
       await addDoc(collection(db, "messages"), {
         text: newMessage,
         user: user.email,
         timestamp: serverTimestamp(),
       });
       setNewMessage("");
-      fetchMessages();
+      console.log("Message sent successfully");
+      // No need to call fetchMessages() - real-time listener will update automatically
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -130,13 +155,22 @@ export default function Dashboard() {
       <div className="bg-white rounded-2xl shadow-sm p-4 border border-black">
         <h2 className="text-lg font-semibold text-black mb-2">💬 Team Chat</h2>
         <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
-          {messages.map((msg, index) => (
-            <div key={index} className="bg-gray-100 p-2 rounded">
-              <p className="text-sm text-gray-700">
-                <strong>{msg.user}: </strong>{msg.text}
-              </p>
-            </div>
-          ))}
+          {messages.length === 0 ? (
+            <p className="text-gray-500 text-sm">No messages yet. Start the conversation!</p>
+          ) : (
+            messages.map((msg, index) => (
+              <div key={msg.id || index} className="bg-gray-100 p-2 rounded">
+                <p className="text-sm text-gray-700">
+                  <strong>{msg.user}: </strong>{msg.text}
+                </p>
+                {msg.timestamp && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {msg.timestamp.toDate ? msg.timestamp.toDate().toLocaleTimeString() : 'Sending...'}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
         </div>
         <div className="flex gap-2">
           <input
