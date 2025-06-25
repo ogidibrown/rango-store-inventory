@@ -66,13 +66,24 @@ export default function Dashboard() {
 
   const handleSendMessage = async () => {
     if (newMessage.trim() === "") return;
-    await addDoc(collection(db, "messages"), {
-      text: newMessage,
-      user: user.email,
-      timestamp: serverTimestamp(),
-    });
-    setNewMessage("");
-    fetchMessages();
+    
+    try {
+      await addDoc(collection(db, "messages"), {
+        text: newMessage,
+        user: user.email,
+        timestamp: serverTimestamp(),
+      });
+      setNewMessage("");
+      fetchMessages();
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
   };
 
   const stats = [
@@ -116,7 +127,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-
       <div className="bg-white rounded-2xl shadow-sm p-4 border border-black">
         <h2 className="text-lg font-semibold text-black mb-2">💬 Team Chat</h2>
         <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
@@ -132,13 +142,14 @@ export default function Dashboard() {
           <input
             type="text"
             placeholder="Type a message..."
-            className="flex-1 border text-black px-3 py-2 border-b-black rounded"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
           />
           <button
             onClick={handleSendMessage}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
           >
             Send
           </button>
