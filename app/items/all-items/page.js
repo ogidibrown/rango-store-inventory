@@ -3,6 +3,10 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../../libs/firebase";
 import Link from "next/link";
+import Papa from "papaparse";
+import { saveAs } from "file-saver";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 export default function ItemsPage() {
   const [items, setItems] = useState([]);
@@ -13,21 +17,13 @@ export default function ItemsPage() {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log("Fetching items from Firebase...");
       const snapshot = await getDocs(collection(db, "items"));
-      console.log("Snapshot received:", snapshot);
-      console.log("Number of docs:", snapshot.docs.length);
-      
       const list = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      
-      console.log("Items fetched:", list);
       setItems(list);
     } catch (err) {
-      console.error("Error fetching items:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -39,9 +35,43 @@ export default function ItemsPage() {
       await deleteDoc(doc(db, "items", id));
       fetchItems();
     } catch (err) {
-      console.error("Error deleting item:", err);
       setError(err.message);
     }
+  };
+
+  const exportToExcel = () => {
+    const csv = Papa.unparse(
+      items.map((item) => ({
+        Description: item.description || "",
+        "Part Number": item.partnumber || "",
+        Location: item.location || "",
+        Supplier: item.supplier || "",
+        "Unit Cost": item.unitcost || "",
+        Quantity: item.quantity || "",
+      }))
+    );
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, "items.csv");
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Items List", 14, 15);
+    const tableColumn = ["Description", "Part Number", "Location", "Supplier", "Unit Cost", "Quantity"];
+    const tableRows = items.map((item) => [
+      item.description || "",
+      item.partnumber || "",
+      item.location || "",
+      item.supplier || "",
+      item.unitcost || "",
+      item.quantity || "",
+    ]);
+    doc.autoTable({
+      startY: 20,
+      head: [tableColumn],
+      body: tableRows,
+    });
+    doc.save("items.pdf");
   };
 
   useEffect(() => {
@@ -76,9 +106,18 @@ export default function ItemsPage() {
   return (
     <div className="p-4 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">All Items</h1>
-      
+
+      <div className="flex space-x-4 mb-4">
+        <button onClick={exportToExcel} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+          Export to Excel
+        </button>
+        <button onClick={exportToPDF} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+          Export to PDF
+        </button>
+      </div>
+
       {items.length === 0 ? (
-        <p className="text-gray-500">No items found. Make sure you have data in your 'items' collection.</p>
+        <p className="text-gray-500">No items found.</p>
       ) : (
         <ul className="space-y-2">
           {items.map((item) => (
