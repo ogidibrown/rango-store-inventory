@@ -107,7 +107,7 @@ export default function ItemsPage() {
     <div className="p-4 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">All Items</h1>
 
-      <div className="flex space-x-4 mb-4">
+      <div className="flex flex-col space-x-4 mb-4">
         <button onClick={exportToExcel} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
           Export to Excel
         </button>
