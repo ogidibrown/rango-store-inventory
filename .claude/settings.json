@@ -5,7 +5,9 @@
       "Bash(git push *)",
       "Bash(git fetch *)",
       "Bash(gh repo *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git pull *)",
+      "Bash(git stash *)"
     ]
   }
 }
