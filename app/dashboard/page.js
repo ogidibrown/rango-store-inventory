@@ -1,0 +1,240 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../../libs/firebase";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+  onSnapshot,
+} from "firebase/firestore";
+import { Card, CardContent } from "../../components/card";
+import {
+  ArrowDown,
+  ArrowUp,
+  PackageCheck,
+  Warehouse,
+} from "lucide-react";
+
+export default function Dashboard() {
+  const router = useRouter();
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsIn, setItemsIn] = useState(0);
+  const [itemsOut, setItemsOut] = useState(0);
+  const [lowStockCount, setLowStockCount] = useState(0);
+  const [user, setUser] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+
+  useEffect(() => {
+    let unsubscribeMessages;
+    
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/login");
+      } else {
+        setUser(user);
+        // Set up real-time listener for messages
+        unsubscribeMessages = fetchMessages();
+      }
+    });
+    
+    fetchStats();
+    
+    // Cleanup function
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeMessages) {
+        unsubscribeMessages();
+      }
+    };
+  }, [router]);
+
+  const fetchStats = async () => {
+    const itemsSnapshot = await getDocs(collection(db, "items"));
+    const items = itemsSnapshot.docs.map((doc) => doc.data());
+    setTotalItems(items.length);
+
+    const lowStockItems = items.filter((item) => item.quantity <= (item.minStock || 4));
+    setLowStockCount(lowStockItems.length);
+
+    const historySnapshot = await getDocs(collection(db, "history"));
+    const history = historySnapshot.docs.map((doc) => doc.data());
+    setItemsIn(history.filter((h) => h.type === "stock-in").length);
+    setItemsOut(history.filter((h) => h.type === "stock-out").length);
+  };
+
+  const fetchMessages = () => {
+    const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
+    
+    // Real-time listener
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const msgs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setMessages(msgs);
+      console.log("Messages updated:", msgs);
+    }, (error) => {
+      console.error("Error fetching messages:", error);
+    });
+    
+    return unsubscribe;
+  };
+
+  const handleSendMessage = async () => {
+    if (newMessage.trim() === "") return;
+    
+    try {
+      console.log("Sending message:", newMessage);
+      await addDoc(collection(db, "messages"), {
+        text: newMessage,
+        user: user.email,
+        timestamp: serverTimestamp(),
+      });
+      setNewMessage("");
+      console.log("Message sent successfully");
+      // No need to call fetchMessages() - real-time listener will update automatically
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
+  const clearMyMessages = async () => {
+    if (!confirm("Delete all your messages from the chat? This cannot be undone.")) return;
+    const q = query(collection(db, "messages"), where("user", "==", user.email));
+    const snap = await getDocs(q);
+    await Promise.all(snap.docs.map((d) => deleteDoc(doc(db, "messages", d.id))));
+  };
+
+  const deleteMyMessage = async (msgId) => {
+    await deleteDoc(doc(db, "messages", msgId));
+  };
+
+  const stats = [
+    {
+      label: "Total Stock Items",
+      value: totalItems,
+      icon: <PackageCheck className="text-blue-600" />,
+    },
+    {
+      label: "Stock Items In",
+      value: itemsIn,
+      icon: <ArrowDown className="text-green-600" />,
+    },
+    {
+      label: "Stock Items Out",
+      value: itemsOut,
+      icon: <ArrowUp className="text-red-600" />,
+    },
+    {
+      label: "Low Stock Alerts",
+      value: lowStockCount,
+      icon: <Warehouse className="text-yellow-600" />,
+    },
+  ];
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6">Inventory Dashboard</h1>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {stats.map((stat, i) => (
+          <Card key={i} className="rounded-2xl shadow-sm border border-gray-200">
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className="p-2 bg-gray-100 rounded-full">{stat.icon}</div>
+              <div>
+                <p className="text-sm text-gray-500">{stat.label}</p>
+                <p className="text-xl font-semibold text-gray-800">{stat.value}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="bg-gray-800 rounded-2xl shadow-sm p-4 border border-gray-700">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-white">💬 Team Chat</h2>
+          {messages.some((m) => m.user === user?.email) && (
+            <button
+              onClick={clearMyMessages}
+              className="text-xs text-red-400 hover:text-red-300 border border-red-700 hover:border-red-500 px-2 py-1 rounded transition-colors"
+            >
+              Clear my messages
+            </button>
+          )}
+        </div>
+
+        <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
+          {messages.length === 0 ? (
+            <p className="text-gray-500 text-sm">No messages yet. Start the conversation!</p>
+          ) : (
+            messages.map((msg, index) => {
+              const isOwn = msg.user === user?.email;
+              return (
+                <div
+                  key={msg.id || index}
+                  className={`group flex items-start gap-2 ${isOwn ? "flex-row-reverse" : ""}`}
+                >
+                  <div className={`flex-1 p-2 rounded-lg ${isOwn ? "bg-blue-900" : "bg-gray-700"}`}>
+                    <p className="text-xs font-semibold text-gray-300 mb-0.5">
+                      {isOwn ? "You" : msg.user}
+                    </p>
+                    <p className="text-sm text-white">{msg.text}</p>
+                    {msg.timestamp && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        {msg.timestamp.toDate
+                          ? msg.timestamp.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                          : "Sending..."}
+                      </p>
+                    )}
+                  </div>
+                  {isOwn && (
+                    <button
+                      onClick={() => deleteMyMessage(msg.id)}
+                      className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 text-xs mt-1 transition-opacity shrink-0"
+                      title="Delete message"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Type a message..."
+            className="flex-1 px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+          />
+          <button
+            onClick={handleSendMessage}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
